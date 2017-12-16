@@ -16,5 +16,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/LighterStudioz/nmd-base-service.git"
-  }
+  },
+  "readme": "README.md"
 }
