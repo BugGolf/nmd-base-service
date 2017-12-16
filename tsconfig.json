@@ -1,0 +1,21 @@
+{
+    "compileOnSave": false,
+    "compilerOptions": {
+      "outDir": "./dist",
+      "sourceMap": true,
+      "declaration": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "target": "es5"
+    },
+    "files": [
+        "src/index.ts",
+        "src/base-collection.ts",
+        "src/base-service.ts",
+        "src/base-event.ts",
+        "src/base-model.ts",
+        "src/base-option.ts",
+        "src/base-config.ts"
+    ]
+}
+  
