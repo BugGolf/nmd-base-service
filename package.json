@@ -1,5 +1,5 @@
 {
-  "name": "@lighterstudioz/base-service",
+  "name": "@nmd/base-service",
   "version": "1.0.1",
   "description": "RESTful Service for Angular",
   "main": "dist/index.js",
