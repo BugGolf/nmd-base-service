@@ -1,4 +1,4 @@
-import { BaseCollection } from './base-collection';
+import { BaseCollection } from './index';
 export declare class BaseModel<T> {
     private _primary;
     private _items;

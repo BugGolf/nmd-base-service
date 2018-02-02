@@ -79,29 +79,10 @@ export class BaseService<T>
         this._option = option;
 
         let url = this.config.baseUrl + "/" + this.url;
-        let Params = new HttpParams();
-        
-        // Config search
-        if (this._option && this._option.search) Params = Params.append("search", this._option.search.toString());
-
-        // Config current page
-        if (this._option && this._option.page) Params = Params.append("page", this._option.page.toString());
-        else Params = Params.append("perpage", this.page.toString());
-
-        // Config per page
-        if (this._option && this._option.perPage) Params = Params.append("perpage", this._option.perPage.toString());
-        else Params = Params.append("perpage", this.perPage.toString());
-
-        // Config each values
-        if (this._option && this._option.values) {
-            this._option.values.forEach(field => {
-                Params = Params.append(field.key, field.value.toString());
-            });
-        }
 
         // Raise event Before
-        if (event && event.before) event.before(Params);
-        var http = this._http.get<BaseCollection<T>>(url, { params: Params }).subscribe(
+        if (event && event.before) event.before(this._option);
+        var http = this._http.get<BaseCollection<T>>(url, { params: <{}>this._option }).subscribe(
             (res:BaseCollection<T>) => {
                 // Fill Data from server to model
                 var data = res;

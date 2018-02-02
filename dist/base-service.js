@@ -1,5 +1,4 @@
 import { BaseModel } from './base-model';
-import { HttpParams } from "@angular/common/http";
 var BaseService = /** @class */ (function () {
     function BaseService(http) {
         var _this = this;
@@ -63,30 +62,10 @@ var BaseService = /** @class */ (function () {
         var _this = this;
         this._option = option;
         var url = this.config.baseUrl + "/" + this.url;
-        var Params = new HttpParams();
-        // Config search
-        if (this._option && this._option.search)
-            Params = Params.append("search", this._option.search.toString());
-        // Config current page
-        if (this._option && this._option.page)
-            Params = Params.append("page", this._option.page.toString());
-        else
-            Params = Params.append("perpage", this.page.toString());
-        // Config per page
-        if (this._option && this._option.perPage)
-            Params = Params.append("perpage", this._option.perPage.toString());
-        else
-            Params = Params.append("perpage", this.perPage.toString());
-        // Config each values
-        if (this._option && this._option.values) {
-            this._option.values.forEach(function (field) {
-                Params = Params.append(field.key, field.value.toString());
-            });
-        }
         // Raise event Before
         if (event && event.before)
-            event.before(Params);
-        var http = this._http.get(url, { params: Params }).subscribe(function (res) {
+            event.before(this._option);
+        var http = this._http.get(url, { params: this._option }).subscribe(function (res) {
             // Fill Data from server to model
             var data = res;
             _this._model.items.current_page = data["current_page"];

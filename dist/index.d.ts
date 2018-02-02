@@ -1,6 +1,6 @@
-export * from './base-model';
-export * from './base-service';
-export * from './base-collection';
-export * from './base-config';
-export * from './base-option';
-export * from './base-event';
+export { BaseModel } from './base-model';
+export { BaseService } from './base-service';
+export { BaseCollection } from './base-collection';
+export { BaseConfig } from './base-config';
+export { BaseOption } from './base-option';
+export { BaseEvent } from './base-event';

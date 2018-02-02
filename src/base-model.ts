@@ -1,5 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { BaseCollection } from './base-collection';
+import { BaseCollection } from './index';
 
 export class BaseModel<T>
 {

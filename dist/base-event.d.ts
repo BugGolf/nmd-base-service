@@ -1,10 +1,9 @@
-import { HttpParams } from "@angular/common/http";
 export interface BaseEvent<T> {
     /**
      * Before Event
      *
      */
-    before?(params: HttpParams): void;
+    before?(params: any): void;
     /**
      * Success Event
      */
