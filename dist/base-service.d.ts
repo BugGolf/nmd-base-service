@@ -1,4 +1,5 @@
 import { BaseModel } from './base-model';
+import { BaseCollection } from './base-collection';
 import { BaseConfig } from './base-config';
 import { BaseOption } from './base-option';
 import { BaseEvent } from './base-event';
@@ -19,7 +20,7 @@ export declare class BaseService<T> {
      * @param option Option for query on server.
      * @param event Event for operation get.
      */
-    get(option?: BaseOption, event?: BaseEvent): void;
+    get(option?: BaseOption, event?: BaseEvent<BaseCollection<T>>): void;
     /**
      * Create new record to model.
      */
@@ -36,13 +37,13 @@ export declare class BaseService<T> {
      *
      * @param event Event for operation save.
      */
-    save(event?: BaseEvent): void;
+    save(event?: BaseEvent<BaseCollection<T>>): void;
     /**
      * Delete record on server.
      *
      * @param event Event for operation delete.
      */
-    delete(event?: BaseEvent): void;
+    delete(event?: BaseEvent<BaseCollection<T>>): void;
     /**
      * Binding Model
      */

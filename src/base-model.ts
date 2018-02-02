@@ -1,9 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BaseCollection } from './base-collection';
 
-
-
-
 export class BaseModel<T>
 {
     private _primary: string = "id";
@@ -13,13 +10,13 @@ export class BaseModel<T>
     /**
      * Return items.
      */
-    public get Items(): BaseCollection<T> {
+    public get items(): BaseCollection<T> {
         return this._items;
     }
     /**
      * Set Items.
      */
-    public set Items(value : BaseCollection<T> )
+    public set items(value : BaseCollection<T> )
     {
         this._items = value;
     }

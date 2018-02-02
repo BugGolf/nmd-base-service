@@ -9,7 +9,7 @@ export declare class BaseModel<T> {
     /**
      * Set Items.
      */
-    Items: BaseCollection<T>;
+    items: BaseCollection<T>;
     /**
      * Return selectedItem.
      */

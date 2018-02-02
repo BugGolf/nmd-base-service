@@ -1,21 +1,24 @@
 {
     "compileOnSave": false,
     "compilerOptions": {
-      "outDir": "./dist",
-      "sourceMap": true,
-      "declaration": true,
-      "emitDecoratorMetadata": true,
-      "experimentalDecorators": true,
-      "target": "es5"
+        "strict": false,
+        "target": "es5",
+        "module": "es2015",
+        "sourceMap":   true,
+        "moduleResolution": "node",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "declaration": true,
+        "outDir": "./dist",
+        "lib": ["es2015", "dom"],
+        "typeRoots": [
+            "node_modules/@types/"
+        ]
     },
     "files": [
-        "src/index.ts",
-        "src/base-collection.ts",
-        "src/base-service.ts",
-        "src/base-event.ts",
-        "src/base-model.ts",
-        "src/base-option.ts",
-        "src/base-config.ts"
+        "./src/index.ts"
+    ],
+    "exclude": [
+        "node_modules"
     ]
 }
-  

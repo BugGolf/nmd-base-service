@@ -1,8 +1,6 @@
 export interface BaseOption {
     search?:string;
-    take?: number;      // Limit record.
-    offset?: number;    // Skip record.
-    perPage?: number;   // Number record per display
-    page?: number;      // Page
+    page?: number;      // Limit record.
+    perPage?: number;      // Limit record.
     values?: { key: string, value: string | number }[]; // Custom params
 }

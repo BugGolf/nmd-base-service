@@ -18,7 +18,7 @@ export class BaseService<T>
         debug: true
     }
 
-    private _event: BaseEvent;
+    private _event: BaseEvent<BaseCollection<T>>;
     private _option: BaseOption;
     private _model: BaseModel<T> = new BaseModel();
     private _http: HttpClient;
@@ -75,40 +75,56 @@ export class BaseService<T>
      * @param option Option for query on server.
      * @param event Event for operation get.
      */
-    public get(option?: BaseOption, event?: BaseEvent) {
+    public get(option?: BaseOption, event?: BaseEvent<BaseCollection<T>>) {
         this._option = option;
 
-        var url = this.config.baseUrl + "/" + this.url;
-        var params = new HttpParams();
-
+        let url = this.config.baseUrl + "/" + this.url;
+        let Params = new HttpParams();
+        
         // Config search
-        if (this._option && this._option.page) params.append("search", this._option.search.toString());
+        if (this._option && this._option.search) Params = Params.append("search", this._option.search.toString());
 
         // Config current page
-        if (this._option && this._option.page) params.append("page", this._option.page.toString());
-        else params.append("perpage", this.page.toString());
+        if (this._option && this._option.page) Params = Params.append("page", this._option.page.toString());
+        else Params = Params.append("perpage", this.page.toString());
+
         // Config per page
-        if (this._option && this._option.perPage) params.append("perpage", this._option.perPage.toString());
-        else params.append("perpage", this.perPage.toString());
+        if (this._option && this._option.perPage) Params = Params.append("perpage", this._option.perPage.toString());
+        else Params = Params.append("perpage", this.perPage.toString());
 
         // Config each values
         if (this._option && this._option.values) {
             this._option.values.forEach(field => {
-                params.append(field.key, field.value.toString());
+                Params = Params.append(field.key, field.value.toString());
             });
         }
 
         // Raise event Before
-        if (event && event.before) event.before(params);
-        var http = this._http.get(url, { params }).subscribe(
-            res => {
+        if (event && event.before) event.before(Params);
+        var http = this._http.get<BaseCollection<T>>(url, { params: Params }).subscribe(
+            (res:BaseCollection<T>) => {
                 // Fill Data from server to model
-                var data = <BaseCollection<T>>res;
-                this._model.Items = data.Results; // Receive data to default
-                this._model.Items = data; // Receive data
+                var data = res;
+
+                this._model.items.current_page = data["current_page"];    
+                this._model.items.data = data["data"];    
+                this._model.items.first_page_url = data["first_page_url"];
+                this._model.items.from = data["from"];
+                this._model.items.last_page = data["last_page"];
+                this._model.items.last_page_url = data["last_page_url"];
+                this._model.items.next_page_url = data["next_page_url"];
+                this._model.items.path = data["path"];
+                this._model.items.per_page = data["per_page"];
+                this._model.items.prev_page_url = data["prev_page_url"];
+                this._model.items.to = data["to"];
+                this._model.items.total = data["total"];
+                
+                data["data"].forEach( (value:T) => {
+                    this._model.items.push(value);
+                });
 
                 // Raise event Success
-                if (event && event.success) event.success(this._model.Items);
+                if (event && event.success) event.success(this._model.items);
             },
             e => {
                 // Raise event Error
@@ -146,7 +162,7 @@ export class BaseService<T>
      * 
      * @param event Event for operation save.
      */
-    public save(event?: BaseEvent): void {
+    public save(event?: BaseEvent<BaseCollection<T>>): void {
         // Get record
         var value = this._model.selectedItem;
 
@@ -158,10 +174,10 @@ export class BaseService<T>
             var http = this._http.post(url, value).subscribe(
                 res => {
                     // Push new record to array
-                    this._model.Items.push(<T>res);
+                    this._model.items.push(<T>res);
 
                     // Refrsh data
-                    this._model.Items = [...this._model.Items];
+                    this._model.items = [...this._model.items];
 
                     // Raise Event Success.
                     if(event && event.success) event.success(<T>res);
@@ -182,10 +198,10 @@ export class BaseService<T>
             var http = this._http.post(url, value).subscribe(
                 res => {
                     // Update Record from server.
-                    this._model.Items[this._model.selectedIndex] = <T>res;
+                    this._model.items[this._model.selectedIndex] = <T>res;
 
                     // Refrsh data
-                    this._model.Items = [...this._model.Items];
+                    this._model.items = [...this._model.items];
 
                     // Raise Event Success.
                     if(event && event.success) event.success(<T>res);
@@ -209,7 +225,7 @@ export class BaseService<T>
      * 
      * @param event Event for operation delete.
      */
-    public delete(event?: BaseEvent): void {
+    public delete(event?: BaseEvent<BaseCollection<T>>): void {
 
 
     }

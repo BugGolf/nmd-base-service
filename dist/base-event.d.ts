@@ -1,5 +1,5 @@
 import { HttpParams } from "@angular/common/http";
-export interface BaseEvent {
+export interface BaseEvent<T> {
     /**
      * Before Event
      *
@@ -16,5 +16,5 @@ export interface BaseEvent {
     /**
      * Completed Event
      */
-    completed(): void;
+    completed?(): void;
 }

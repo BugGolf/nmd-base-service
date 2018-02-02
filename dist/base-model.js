@@ -1,12 +1,10 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var BaseModel = /** @class */ (function () {
     function BaseModel() {
         this._primary = "id";
         this._items = [];
         this._item = {};
     }
-    Object.defineProperty(BaseModel.prototype, "Items", {
+    Object.defineProperty(BaseModel.prototype, "items", {
         /**
          * Return items.
          */
@@ -78,5 +76,5 @@ var BaseModel = /** @class */ (function () {
     });
     return BaseModel;
 }());
-exports.BaseModel = BaseModel;
+export { BaseModel };
 //# sourceMappingURL=base-model.js.map

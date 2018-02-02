@@ -1,7 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var base_model_1 = require("./base-model");
-var http_1 = require("@angular/common/http");
+import { BaseModel } from './base-model';
+import { HttpParams } from "@angular/common/http";
 var BaseService = /** @class */ (function () {
     function BaseService(http) {
         var _this = this;
@@ -13,7 +11,7 @@ var BaseService = /** @class */ (function () {
             baseUrl: "",
             debug: true
         };
-        this._model = new base_model_1.BaseModel();
+        this._model = new BaseModel();
         /**
          * Load HTTPClient from Angular Injection
          */
@@ -65,37 +63,50 @@ var BaseService = /** @class */ (function () {
         var _this = this;
         this._option = option;
         var url = this.config.baseUrl + "/" + this.url;
-        var params = new http_1.HttpParams();
+        var Params = new HttpParams();
         // Config search
-        if (this._option && this._option.page)
-            params.append("search", this._option.search.toString());
+        if (this._option && this._option.search)
+            Params = Params.append("search", this._option.search.toString());
         // Config current page
         if (this._option && this._option.page)
-            params.append("page", this._option.page.toString());
+            Params = Params.append("page", this._option.page.toString());
         else
-            params.append("perpage", this.page.toString());
+            Params = Params.append("perpage", this.page.toString());
         // Config per page
         if (this._option && this._option.perPage)
-            params.append("perpage", this._option.perPage.toString());
+            Params = Params.append("perpage", this._option.perPage.toString());
         else
-            params.append("perpage", this.perPage.toString());
+            Params = Params.append("perpage", this.perPage.toString());
         // Config each values
         if (this._option && this._option.values) {
             this._option.values.forEach(function (field) {
-                params.append(field.key, field.value.toString());
+                Params = Params.append(field.key, field.value.toString());
             });
         }
         // Raise event Before
         if (event && event.before)
-            event.before(params);
-        var http = this._http.get(url, { params: params }).subscribe(function (res) {
+            event.before(Params);
+        var http = this._http.get(url, { params: Params }).subscribe(function (res) {
             // Fill Data from server to model
             var data = res;
-            _this._model.Items = data.Results; // Receive data to default
-            _this._model.Items = data; // Receive data
+            _this._model.items.current_page = data["current_page"];
+            _this._model.items.data = data["data"];
+            _this._model.items.first_page_url = data["first_page_url"];
+            _this._model.items.from = data["from"];
+            _this._model.items.last_page = data["last_page"];
+            _this._model.items.last_page_url = data["last_page_url"];
+            _this._model.items.next_page_url = data["next_page_url"];
+            _this._model.items.path = data["path"];
+            _this._model.items.per_page = data["per_page"];
+            _this._model.items.prev_page_url = data["prev_page_url"];
+            _this._model.items.to = data["to"];
+            _this._model.items.total = data["total"];
+            data["data"].forEach(function (value) {
+                _this._model.items.push(value);
+            });
             // Raise event Success
             if (event && event.success)
-                event.success(_this._model.Items);
+                event.success(_this._model.items);
         }, function (e) {
             // Raise event Error
             if (event && event.error)
@@ -139,9 +150,9 @@ var BaseService = /** @class */ (function () {
             var url = this.config.baseUrl + "/" + this.url;
             var http = this._http.post(url, value).subscribe(function (res) {
                 // Push new record to array
-                _this._model.Items.push(res);
+                _this._model.items.push(res);
                 // Refrsh data
-                _this._model.Items = _this._model.Items.slice();
+                _this._model.items = _this._model.items.slice();
                 // Raise Event Success.
                 if (event && event.success)
                     event.success(res);
@@ -160,9 +171,9 @@ var BaseService = /** @class */ (function () {
             var url = this.config.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
             var http = this._http.post(url, value).subscribe(function (res) {
                 // Update Record from server.
-                _this._model.Items[_this._model.selectedIndex] = res;
+                _this._model.items[_this._model.selectedIndex] = res;
                 // Refrsh data
-                _this._model.Items = _this._model.Items.slice();
+                _this._model.items = _this._model.items.slice();
                 // Raise Event Success.
                 if (event && event.success)
                     event.success(res);
@@ -193,5 +204,5 @@ var BaseService = /** @class */ (function () {
     };
     return BaseService;
 }());
-exports.BaseService = BaseService;
+export { BaseService };
 //# sourceMappingURL=base-service.js.map
