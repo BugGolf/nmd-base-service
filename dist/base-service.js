@@ -148,7 +148,7 @@ var BaseService = /** @class */ (function () {
         }
         else {
             var url = this.config.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
-            var http = this._http.post(url, value).subscribe(function (res) {
+            var http = this._http.put(url, value).subscribe(function (res) {
                 // Update Record from server.
                 _this._model.items[_this._model.selectedIndex] = res;
                 // Refrsh data
