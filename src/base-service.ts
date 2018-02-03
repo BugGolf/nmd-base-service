@@ -176,7 +176,7 @@ export class BaseService<T>
         } else {
             var url = this.config.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
 
-            var http = this._http.post(url, value).subscribe(
+            var http = this._http.put(url, value).subscribe(
                 res => {
                     // Update Record from server.
                     this._model.items[this._model.selectedIndex] = <T>res;
