@@ -1,6 +1,7 @@
 export interface BaseOption {
     search?:string;
-    page?: number;      // Limit record.
-    perPage?: number;      // Limit record.
+    page?: number;      
+    perPage?: number;
+    include?:string;
     values?: { key: string, value: string | number }[]; // Custom params
 }

@@ -6,6 +6,11 @@ export class BaseModel<T>
     private _items: BaseCollection<T> = [];
     private _item: T = {} as any;
 
+    public count()
+    {
+        return this._items.length || 0;
+    }
+
     /**
      * Return items.
      */
