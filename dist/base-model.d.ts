@@ -3,6 +3,7 @@ export declare class BaseModel<T> {
     private _primary;
     private _items;
     private _item;
+    count(): number;
     /**
      * Return items.
      */

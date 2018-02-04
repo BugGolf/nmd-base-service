@@ -13,6 +13,7 @@ export declare class BaseService<T> {
     private _option;
     private _model;
     private _http;
+    private _authorization;
     constructor(http: any);
     /**
      * Get from server.
@@ -48,4 +49,5 @@ export declare class BaseService<T> {
      * Binding Model
      */
     getModel(): BaseModel<T>;
+    setAuthorization(value: string): void;
 }

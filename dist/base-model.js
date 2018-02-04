@@ -4,6 +4,9 @@ var BaseModel = /** @class */ (function () {
         this._items = [];
         this._item = {};
     }
+    BaseModel.prototype.count = function () {
+        return this._items.length || 0;
+    };
     Object.defineProperty(BaseModel.prototype, "items", {
         /**
          * Return items.

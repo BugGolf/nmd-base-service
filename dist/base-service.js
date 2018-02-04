@@ -1,4 +1,5 @@
 import { BaseModel } from './base-model';
+import { HttpHeaders } from "@angular/common/http";
 var BaseService = /** @class */ (function () {
     function BaseService(http) {
         var _this = this;
@@ -11,6 +12,7 @@ var BaseService = /** @class */ (function () {
             debug: true
         };
         this._model = new BaseModel();
+        this._authorization = null;
         /**
          * Load HTTPClient from Angular Injection
          */
@@ -62,10 +64,16 @@ var BaseService = /** @class */ (function () {
         var _this = this;
         this._option = option;
         var url = this.config.baseUrl + "/" + this.url;
+        var header = new HttpHeaders();
+        if (this._authorization)
+            header = header.set("Authorization", this._authorization);
         // Raise event Before
         if (event && event.before)
             event.before(this._option);
-        var http = this._http.get(url, { params: this._option }).subscribe(function (res) {
+        var http = this._http.get(url, {
+            headers: header,
+            params: this._option
+        }).subscribe(function (res) {
             // Fill Data from server to model
             var data = res;
             _this._model.items.current_page = data["current_page"];
@@ -83,6 +91,9 @@ var BaseService = /** @class */ (function () {
             data["data"].forEach(function (value) {
                 _this._model.items.push(value);
             });
+            // Select First
+            if (_this._model.count() > 0)
+                _this._model.selectedIndex = 0;
             // Raise event Success
             if (event && event.success)
                 event.success(_this._model.items);
@@ -123,11 +134,14 @@ var BaseService = /** @class */ (function () {
         var _this = this;
         // Get record
         var value = this._model.selectedItem;
+        var header = new HttpHeaders();
+        if (this._authorization)
+            header = header.set("Authorization", this._authorization);
         // Check save NewRecord or Update
         if (!value[this._model.primaryKey]) {
             // New record. Bacause record not have primary key.
             var url = this.config.baseUrl + "/" + this.url;
-            var http = this._http.post(url, value).subscribe(function (res) {
+            var http = this._http.post(url, value, { headers: header }).subscribe(function (res) {
                 // Push new record to array
                 _this._model.items.push(res);
                 // Refrsh data
@@ -148,7 +162,7 @@ var BaseService = /** @class */ (function () {
         }
         else {
             var url = this.config.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
-            var http = this._http.put(url, value).subscribe(function (res) {
+            var http = this._http.put(url, value, { headers: header }).subscribe(function (res) {
                 // Update Record from server.
                 _this._model.items[_this._model.selectedIndex] = res;
                 // Refrsh data
@@ -174,12 +188,39 @@ var BaseService = /** @class */ (function () {
      * @param event Event for operation delete.
      */
     BaseService.prototype.delete = function (event) {
+        var _this = this;
+        var value = this._model.selectedItem;
+        var header = new HttpHeaders();
+        if (this._authorization)
+            header = header.set("Authorization", this._authorization);
+        var url = this.config.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
+        var http = this._http.delete(url, { headers: header }).subscribe(function (res) {
+            // Delete Record from server.
+            _this._model.items.splice(_this._model.selectedIndex, 1);
+            // Refrsh data
+            _this._model.items = _this._model.items.slice();
+            // Raise Event Success.
+            if (event && event.success)
+                event.success(res);
+        }, function (e) {
+            // Raise Event Error.
+            if (event && event.error)
+                event.error(e);
+        }, function () {
+            // Raise Event Completed
+            if (event && event.completed)
+                event.completed();
+            http.unsubscribe();
+        });
     };
     /**
      * Binding Model
      */
     BaseService.prototype.getModel = function () {
         return this._model;
+    };
+    BaseService.prototype.setAuthorization = function (value) {
+        this._authorization = value;
     };
     return BaseService;
 }());
