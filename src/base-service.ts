@@ -169,7 +169,8 @@ export class BaseService<T> implements BaseConfig {
             this.on("before");
 
             let http = this._http.get<BaseCollection<T>>(url, {
-                headers: header
+                headers: header,
+                params: params
             }).subscribe(
                 (res: BaseCollection<T>) => {
                     // Fill Data from server to model

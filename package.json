@@ -1,6 +1,6 @@
 {
   "name": "@nmd/base-service",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "RESTful Service for Angular",
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
