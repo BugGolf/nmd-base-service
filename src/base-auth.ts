@@ -1,9 +1,7 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { BaseConfig } from './base-config';
 
-@Injectable()
 export class BaseAuth {
     public authorization_url: string          = '';                                          // Authorization : Example http://[authorization_url]
     public authorization_url_login: string    = '/login';           // Authorization : Example http://[authorization_url]/[login]   Get Refresh Token
@@ -16,7 +14,11 @@ export class BaseAuth {
     private REFRESH_TOKEN: string;
     private ACCESS_TOKEN: string;
 
-    constructor(private http: HttpClient) {
+    private http:HttpClient;
+
+    constructor(http) {
+        this.http = http;
+
         this.REFRESH_TOKEN = localStorage.getItem(this.X_REFRESH_TOKEN);
         this.ACCESS_TOKEN = localStorage.getItem(this.X_ACCESS_TOKEN);
     }
@@ -106,7 +108,7 @@ export class BaseAuth {
             }).subscribe(
                 res => { 
                     this.clearToken();
-                    
+
                     resolve(true); 
                 },
                 e => { resolve(false); },
