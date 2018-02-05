@@ -1,13 +1,23 @@
-import { HttpHeaders, HttpParams } from '@angular/common/http';
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { Injectable } from '@angular/core';
 var BaseAuth = /** @class */ (function () {
     function BaseAuth(http) {
+        this.http = http;
         this.authorization_url = ''; // Authorization : Example http://[authorization_url]
         this.authorization_url_login = '/login'; // Authorization : Example http://[authorization_url]/[login]   Get Refresh Token
         this.authorization_url_logout = '/logout'; // Authorization : Example http://[authorization_url]/[logout]  Clear Token
         this.authorization_url_token = '/accessToken'; // Authorization : Example http://[authorization_url]/[token]   Get Access Token
         this.X_REFRESH_TOKEN = 'X-REFRESH-TOKEN';
         this.X_ACCESS_TOKEN = 'X-ACCESS-TOKEN';
-        this.http = http;
         this.REFRESH_TOKEN = localStorage.getItem(this.X_REFRESH_TOKEN);
         this.ACCESS_TOKEN = localStorage.getItem(this.X_ACCESS_TOKEN);
     }
@@ -27,9 +37,9 @@ var BaseAuth = /** @class */ (function () {
     };
     BaseAuth.prototype.getToken = function () {
         var _this = this;
-        var token = localStorage.getItem(this.X_REFRESH_TOKEN) || null;
+        var refreshToken = this.X_REFRESH_TOKEN;
         this.http.get(this.authorization_url + this.authorization_url_token, {
-            headers: new HttpHeaders().set(this.X_REFRESH_TOKEN, token),
+            headers: new HttpHeaders().set(this.X_REFRESH_TOKEN, this.token()),
             responseType: 'json'
         }).subscribe(function (res) {
             if (res["accessToken"]) {
@@ -53,15 +63,10 @@ var BaseAuth = /** @class */ (function () {
             return new Promise(function (resolve) {
                 // Basic Authorization
                 var authen = 'Basic ' + btoa(userId + ":" + passId);
-                // Each for HttpParams
-                var params = new HttpParams();
-                values.forEach(function (e) {
-                    if (e.value != null)
-                        params = params.append(e.key, e.value);
-                });
+                console.log(_this.http);
                 _this.http.get(_this.authorization_url + _this.authorization_url_login, {
-                    headers: new HttpHeaders().set('Authorization', authen),
-                    params: params,
+                    headers: { "Authorization": authen },
+                    //params: JSON.parse(JSON.stringify(params)),
                     responseType: "json"
                 }).subscribe(function (res) {
                     if (res["accessToken"] && res["refreshToken"]) {
@@ -85,12 +90,15 @@ var BaseAuth = /** @class */ (function () {
         var _this = this;
         return new Promise(function (resolve) {
             _this.http.get(_this.authorization_url + _this.authorization_url_logout, {
-                headers: new HttpHeaders().set(_this.X_REFRESH_TOKEN, _this.REFRESH_TOKEN),
+                headers: new HttpHeaders().set(_this.X_REFRESH_TOKEN, _this.token()),
                 responseType: 'text'
             }).subscribe(function (res) {
                 _this.clearToken();
                 resolve(true);
-            }, function (e) { resolve(false); }, function () { resolve(false); });
+            }, function (e) {
+                console.log(e);
+                resolve(false);
+            });
         });
     };
     BaseAuth.prototype.logged = function () {
@@ -118,6 +126,10 @@ var BaseAuth = /** @class */ (function () {
     BaseAuth.prototype.token = function () {
         return localStorage.getItem(this.X_ACCESS_TOKEN) || null;
     };
+    BaseAuth = __decorate([
+        Injectable(),
+        __metadata("design:paramtypes", [HttpClient])
+    ], BaseAuth);
     return BaseAuth;
 }());
 export { BaseAuth };

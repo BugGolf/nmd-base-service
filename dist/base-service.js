@@ -1,6 +1,5 @@
 import { BaseModel } from './base-model';
-import { HttpUnauthorized } from './base-error';
-import { HttpParams, HttpHeaders } from "@angular/common/http";
+import { HttpHeaders } from "@angular/common/http";
 var BaseService = /** @class */ (function () {
     function BaseService(http, config, auth) {
         var _this = this;
@@ -104,9 +103,10 @@ var BaseService = /** @class */ (function () {
         /**
          * Url Header
          */
+        var http;
         var url = this.baseUrl + "/" + this.url;
         var header = new HttpHeaders();
-        var params = new HttpParams();
+        var params = [];
         /**
          * Load Option|Event
          */
@@ -117,16 +117,16 @@ var BaseService = /** @class */ (function () {
          */
         if (this._option) {
             if (this._option.search)
-                params = params.append("search", this._option.search.toString());
+                params["search"] = this._option.search.toString();
             if (this._option.perPage)
-                params = params.append("perPage", this._option.perPage.toString());
+                params["perPage"] = this._option.perPage.toString();
             if (this._option.page)
-                params = params.append("page", this._option.page.toString());
+                params["page"] = this._option.page.toString();
             if (this._option.include)
-                params = params.append("include", this._option.include.toString());
+                params["include"] = this._option.include.toString();
             if (this._option.values) {
                 this._option.values.forEach(function (value) {
-                    params = params.append(value.key, value.value.toString());
+                    params[value.key] = value.value.toString();
                 });
             }
         }
@@ -138,13 +138,19 @@ var BaseService = /** @class */ (function () {
         var auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
             header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+            http = this._http.get(url, {
+                headers: header,
+                params: JSON.parse(JSON.stringify(params))
+            });
+        }
+        else {
+            http = this._http.get(url, {
+                params: JSON.parse(JSON.stringify(params))
+            });
         }
         if (auth) {
             this.on("before");
-            var http = this._http.get(url, {
-                headers: header,
-                params: params
-            }).subscribe(function (res) {
+            http = http.subscribe(function (res) {
                 // Fill Data from server to model
                 var data = res;
                 _this._model.items.current_page = data["current_page"];
@@ -165,6 +171,7 @@ var BaseService = /** @class */ (function () {
                 _this._model.selectedIndex = 0;
                 _this.on("success", _this._model.items);
             }, function (e) {
+                console.log("Error");
                 _this.on("error", e);
             }, function () {
                 _this.on("completed");
@@ -172,7 +179,7 @@ var BaseService = /** @class */ (function () {
             });
         }
         else {
-            this.on("error", new HttpUnauthorized());
+            this.on("error", "Access Denied");
         }
     };
     /**
@@ -219,6 +226,9 @@ var BaseService = /** @class */ (function () {
         if (this.authorization) {
             header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
         }
+        else {
+            header = header.set("Authorization", "None");
+        }
         if (auth) {
             // Check save NewRecord or Update
             if (!value[this._model.primaryKey]) {
@@ -260,7 +270,7 @@ var BaseService = /** @class */ (function () {
             }
         }
         else {
-            this.on("error", new HttpUnauthorized());
+            this.on("error", "Access Denied");
         }
     };
     /**
@@ -290,6 +300,9 @@ var BaseService = /** @class */ (function () {
         if (this.authorization) {
             header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
         }
+        else {
+            header = header.set("Authorization", "None");
+        }
         if (auth) {
             var http = this._http.delete(url, { headers: header }).subscribe(function (res) {
                 // Delete Record from server.
@@ -311,7 +324,7 @@ var BaseService = /** @class */ (function () {
             });
         }
         else {
-            this.on("error", new HttpUnauthorized());
+            this.on("error", "Access Denied");
         }
     };
     /**

@@ -5,7 +5,6 @@ import { BaseConfig } from './base-config';
 import { BaseOption } from './base-option';
 import { BaseEvent } from './base-event';
 import { BaseAuth } from './base-auth';
-import { HttpUnauthorized } from './base-error';
 import { HttpClient, HttpParams, HttpHeaders } from "@angular/common/http";
 
 export class BaseService<T> implements BaseConfig {
@@ -125,9 +124,10 @@ export class BaseService<T> implements BaseConfig {
         /**
          * Url Header
          */
+        let http;
         let url = this.baseUrl + "/" + this.url;
         let header = new HttpHeaders();
-        let params = new HttpParams();
+        let params = [];
 
         /**
          * Load Option|Event
@@ -139,14 +139,14 @@ export class BaseService<T> implements BaseConfig {
          * Load Params
          */
         if (this._option) {
-            if (this._option.search) params = params.append("search", this._option.search.toString());
-            if (this._option.perPage) params = params.append("perPage", this._option.perPage.toString());
-            if (this._option.page) params = params.append("page", this._option.page.toString());
-            if (this._option.include) params = params.append("include", this._option.include.toString());
+            if (this._option.search)    params["search"]    = this._option.search.toString();
+            if (this._option.perPage)   params["perPage"]   = this._option.perPage.toString();
+            if (this._option.page)      params["page"]      = this._option.page.toString();
+            if (this._option.include)   params["include"]   = this._option.include.toString();
 
             if (this._option.values) {
                 this._option.values.forEach(value => {
-                    params = params.append(value.key, value.value.toString());
+                    params[value.key]   = value.value.toString();
                 });
             }
         }
@@ -156,18 +156,25 @@ export class BaseService<T> implements BaseConfig {
          * Authorization == false   => auth = true
          * Authorization
          */
+
         let auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
             header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
-        }
 
+            http = this._http.get<BaseCollection<T>>(url, {
+                headers: header,
+                params: JSON.parse(JSON.stringify(params))
+            });
+        } else {
+            http = this._http.get<BaseCollection<T>>(url, {
+                params: JSON.parse(JSON.stringify(params))
+            });
+        }
+        
         if (auth) {
             this.on("before");
 
-            var http = this._http.get<BaseCollection<T>>(url, {
-                headers: header,
-                params: params
-            }).subscribe(
+            http = http.subscribe(
                 (res: BaseCollection<T>) => {
                     // Fill Data from server to model
                     var data = res;
@@ -193,15 +200,16 @@ export class BaseService<T> implements BaseConfig {
                     this.on("success", this._model.items);
                 },
                 e => {
+                    console.log("Error");
                     this.on("error", e);
                 },
                 () => {
                     this.on("completed");
                     http.unsubscribe();
                 }
-                );
+            );
         } else {
-            this.on("error", new HttpUnauthorized());
+            this.on("error", "Access Denied");
         }
     }
 
@@ -252,6 +260,8 @@ export class BaseService<T> implements BaseConfig {
         let auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
             header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+        } else {
+            header = header.set("Authorization", "None");
         }
 
         if (auth) {
@@ -304,7 +314,7 @@ export class BaseService<T> implements BaseConfig {
                 );
             }
         } else {
-            this.on("error", new HttpUnauthorized());
+            this.on("error", "Access Denied");
         }
     }
 
@@ -337,6 +347,8 @@ export class BaseService<T> implements BaseConfig {
         let auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
             header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+        } else {
+            header = header.set("Authorization", "None");
         }
 
         if (auth) {
@@ -362,7 +374,7 @@ export class BaseService<T> implements BaseConfig {
                 }
             );
         } else {
-            this.on("error", new HttpUnauthorized());
+            this.on("error", "Access Denied");
         }
     }
 

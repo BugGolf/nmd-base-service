@@ -1,9 +1,11 @@
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { BaseConfig } from './base-config';
+import { HttpClient, HttpParams, HttpHeaders } from "@angular/common/http";
+import { Injectable } from '@angular/core';
 
+@Injectable()
 export class BaseAuth {
-    public authorization_url: string          = '';                                          // Authorization : Example http://[authorization_url]
+    public authorization_url: string          = '';                 // Authorization : Example http://[authorization_url]
     public authorization_url_login: string    = '/login';           // Authorization : Example http://[authorization_url]/[login]   Get Refresh Token
     public authorization_url_logout: string   = '/logout';          // Authorization : Example http://[authorization_url]/[logout]  Clear Token
     public authorization_url_token: string    = '/accessToken';     // Authorization : Example http://[authorization_url]/[token]   Get Access Token
@@ -14,11 +16,7 @@ export class BaseAuth {
     private REFRESH_TOKEN: string;
     private ACCESS_TOKEN: string;
 
-    private http:HttpClient;
-
-    constructor(http) {
-        this.http = http;
-
+    constructor(private http:HttpClient) {
         this.REFRESH_TOKEN = localStorage.getItem(this.X_REFRESH_TOKEN);
         this.ACCESS_TOKEN = localStorage.getItem(this.X_ACCESS_TOKEN);
     }
@@ -42,10 +40,10 @@ export class BaseAuth {
     }
 
     private getToken() {
-        let token = localStorage.getItem(this.X_REFRESH_TOKEN) || null;
-
+        let refreshToken = this.X_REFRESH_TOKEN;
+        
         this.http.get(this.authorization_url + this.authorization_url_token, {
-            headers: new HttpHeaders().set(this.X_REFRESH_TOKEN, token),
+            headers: new HttpHeaders().set(this.X_REFRESH_TOKEN, this.token()),
             responseType: 'json'
         }).subscribe(
             (res) => {
@@ -68,15 +66,10 @@ export class BaseAuth {
                 // Basic Authorization
                 let authen = 'Basic ' + btoa(userId + ":" + passId);
 
-                // Each for HttpParams
-                let params = new HttpParams();
-                values.forEach(e => { 
-                    if(e.value != null) params = params.append(e.key, e.value); 
-                });
-
+                console.log(this.http);
                 this.http.get(this.authorization_url + this.authorization_url_login, {
-                    headers: new HttpHeaders().set('Authorization', authen),
-                    params: params,
+                    headers: {"Authorization": authen},
+                    //params: JSON.parse(JSON.stringify(params)),
                     responseType: "json"
                 }).subscribe(
                     (res) => {
@@ -103,16 +96,17 @@ export class BaseAuth {
     public logout():Promise<boolean> {
         return new Promise<boolean>((resolve) => {
             this.http.get(this.authorization_url + this.authorization_url_logout, {
-                headers: new HttpHeaders().set(this.X_REFRESH_TOKEN, this.REFRESH_TOKEN),
+                headers: new HttpHeaders().set(this.X_REFRESH_TOKEN, this.token()),
                 responseType: 'text'
             }).subscribe(
                 res => { 
                     this.clearToken();
-
                     resolve(true); 
                 },
-                e => { resolve(false); },
-                () => { resolve(false); }
+                e => {
+                    console.log(e);
+                    resolve(false); 
+                }
             );
         });
     }

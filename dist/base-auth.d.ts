@@ -1,4 +1,6 @@
+import { HttpClient } from "@angular/common/http";
 export declare class BaseAuth {
+    private http;
     authorization_url: string;
     authorization_url_login: string;
     authorization_url_logout: string;
@@ -7,8 +9,7 @@ export declare class BaseAuth {
     private X_ACCESS_TOKEN;
     private REFRESH_TOKEN;
     private ACCESS_TOKEN;
-    private http;
-    constructor(http: any);
+    constructor(http: HttpClient);
     private parseJwt(token);
     private validJwt(token);
     private clearToken();
