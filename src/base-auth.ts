@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 import { BaseConfig } from './base-config';
-import { HttpClient, HttpParams, HttpHeaders } from "@angular/common/http";
+import { HttpClient } from "@angular/common/http";
 import { Injectable } from '@angular/core';
 
 @Injectable()
@@ -41,8 +41,11 @@ export class BaseAuth {
     }
 
     private getToken() {
+        let header = {};
+        header[this.X_REFRESH_TOKEN] = this.token();
+
         this.http.get(this.authorization_url + this.authorization_url_token, {
-            headers: new HttpHeaders().set(this.X_REFRESH_TOKEN, this.token()),
+            headers: header,
             responseType: 'json'
         }).subscribe(
             (res) => {
@@ -63,18 +66,21 @@ export class BaseAuth {
         if (userId && passId) {
             return new Promise<boolean>((resolve) => {
                 // Basic Authorization
+                let header = {}
+                let params = {};
+
                 let authen = 'Basic ' + btoa(userId + ":" + passId);
-                let params = [];
+                header['Authorization'] = authen;
 
                 if(values) {
                     values.forEach(value => {
-                        params[value.key]   = value.value;
+                        if(value.value) params[value.key]   = value.value;
                     });
                 }
 
                 this.http.get(this.authorization_url + this.authorization_url_login, {
-                    headers: new HttpHeaders().set('Authorization', authen),
-                    params: JSON.parse(JSON.stringify(params)),
+                    headers: header,
+                    params: params,
                     responseType: "json"
                 }).subscribe(
                     (res) => {
@@ -100,8 +106,11 @@ export class BaseAuth {
 
     public logout():Promise<boolean> {
         return new Promise<boolean>((resolve) => {
+            let header = {};
+            header[this.X_REFRESH_TOKEN] = this.token();
+
             this.http.get(this.authorization_url + this.authorization_url_logout, {
-                headers: new HttpHeaders().set(this.X_REFRESH_TOKEN, this.token()),
+                headers: header,
                 responseType: 'text'
             }).subscribe(
                 res => { 

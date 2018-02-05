@@ -5,7 +5,7 @@ import { BaseConfig } from './base-config';
 import { BaseOption } from './base-option';
 import { BaseEvent } from './base-event';
 import { BaseAuth } from './base-auth';
-import { HttpClient, HttpParams, HttpHeaders } from "@angular/common/http";
+import { HttpClient } from "@angular/common/http";
 
 @Injectable()
 export class BaseService<T> implements BaseConfig {
@@ -126,8 +126,8 @@ export class BaseService<T> implements BaseConfig {
          * Url Header
          */
         let url = this.baseUrl + "/" + this.url;
-        let header = new HttpHeaders();
-        let params = [];
+        let header = {};
+        let params = {};
 
         /**
          * Load Option|Event
@@ -159,9 +159,9 @@ export class BaseService<T> implements BaseConfig {
         
         let auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
-            header = header.set("Authorization", "Bearer " + this._auth.token()) // Get Access Token
+            header['Authorization'] = "Bearer " + this._auth.token();
         } else {
-            header = header.set("Authorization", "None")
+            header['Authorization'] = "None"
         }
 
 
@@ -240,7 +240,7 @@ export class BaseService<T> implements BaseConfig {
          * Url Header
          */
         let url = this.baseUrl + "/" + this.url;
-        let header = new HttpHeaders();
+        let header = {};
 
         /**
          * Load Option|Event
@@ -254,9 +254,9 @@ export class BaseService<T> implements BaseConfig {
          */
         let auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
-            header = header.set("Authorization", "Bearer " + this._auth.token()) // Get Access Token
+            header['Authorization'] = "Bearer " + this._auth.token();
         } else {
-            header = header.set("Authorization", "None")
+            header['Authorization'] = "None"
         }
 
         if (auth) {
@@ -331,7 +331,7 @@ export class BaseService<T> implements BaseConfig {
          * Url Header
          */
         let url = this.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
-        let header = new HttpHeaders();
+        let header = {};
 
         /**
          * Load Option|Event
@@ -345,9 +345,9 @@ export class BaseService<T> implements BaseConfig {
          */
         let auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
-            header = header.set("Authorization", "Bearer " + this._auth.token()) // Get Access Token
+            header['Authorization'] = "Bearer " + this._auth.token();
         } else {
-            header = header.set("Authorization", "None")
+            header['Authorization'] = "None"
         }
 
         if (auth) {

@@ -10,7 +10,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { Injectable } from '@angular/core';
 import { BaseModel } from './base-model';
 import { BaseAuth } from './base-auth';
-import { HttpHeaders } from "@angular/common/http";
 var BaseService = /** @class */ (function () {
     function BaseService(http, config, auth) {
         var _this = this;
@@ -115,8 +114,8 @@ var BaseService = /** @class */ (function () {
          * Url Header
          */
         var url = this.baseUrl + "/" + this.url;
-        var header = new HttpHeaders();
-        var params = [];
+        var header = {};
+        var params = {};
         /**
          * Load Option|Event
          */
@@ -147,10 +146,10 @@ var BaseService = /** @class */ (function () {
          */
         var auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
-            header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+            header['Authorization'] = "Bearer " + this._auth.token();
         }
         else {
-            header = header.set("Authorization", "None");
+            header['Authorization'] = "None";
         }
         if (auth) {
             this.on("before");
@@ -217,7 +216,7 @@ var BaseService = /** @class */ (function () {
          * Url Header
          */
         var url = this.baseUrl + "/" + this.url;
-        var header = new HttpHeaders();
+        var header = {};
         /**
          * Load Option|Event
          */
@@ -229,10 +228,10 @@ var BaseService = /** @class */ (function () {
          */
         var auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
-            header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+            header['Authorization'] = "Bearer " + this._auth.token();
         }
         else {
-            header = header.set("Authorization", "None");
+            header['Authorization'] = "None";
         }
         if (auth) {
             // Check save NewRecord or Update
@@ -295,7 +294,7 @@ var BaseService = /** @class */ (function () {
          * Url Header
          */
         var url = this.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
-        var header = new HttpHeaders();
+        var header = {};
         /**
          * Load Option|Event
          */
@@ -307,10 +306,10 @@ var BaseService = /** @class */ (function () {
          */
         var auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
-            header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+            header['Authorization'] = "Bearer " + this._auth.token();
         }
         else {
-            header = header.set("Authorization", "None");
+            header['Authorization'] = "None";
         }
         if (auth) {
             var http = this._http.delete(url, {
