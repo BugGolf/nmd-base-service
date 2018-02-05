@@ -3,5 +3,5 @@ export interface BaseOption {
     page?: number;      
     perPage?: number;
     include?:string;
-    values?: { key: string, value: string | number }[]; // Custom params
+    values?: { key: string, value: string }[]; // Custom params
 }

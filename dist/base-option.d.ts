@@ -5,6 +5,6 @@ export interface BaseOption {
     include?: string;
     values?: {
         key: string;
-        value: string | number;
+        value: string;
     }[];
 }

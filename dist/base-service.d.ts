@@ -3,23 +3,34 @@ import { BaseCollection } from './base-collection';
 import { BaseConfig } from './base-config';
 import { BaseOption } from './base-option';
 import { BaseEvent } from './base-event';
-export declare class BaseService<T> {
-    protected primaryKey: string;
-    protected url: string;
-    protected perPage: number;
-    protected page: number;
-    protected config: BaseConfig;
+import { BaseAuth } from './base-auth';
+export declare class BaseService<T> implements BaseConfig {
+    debug: boolean;
+    baseUrl: string;
+    url: string;
+    primaryKey: string;
+    perPage: number;
+    page: number;
+    authorization: boolean;
+    private _auth;
     private _event;
     private _option;
     private _model;
     private _http;
-    private _authorization;
-    constructor(http: any);
+    constructor(http: any, config?: BaseConfig, auth?: BaseAuth);
+    setAuthorization(auth: BaseAuth): void;
+    setConfig(config: any): void;
+    setEvent(event: any): void;
+    setOption(option: any): void;
     /**
-     * Get from server.
+     * RaiseEvent
+     */
+    protected on(event: any, value?: any): void;
+    /**
+     * HTTPClient: GET
      *
-     * @param option Option for query on server.
-     * @param event Event for operation get.
+     * @param option Parameter get from RESTApi
+     * @param event Event HTTPClient
      */
     get(option?: BaseOption, event?: BaseEvent<BaseCollection<T>>): void;
     /**
@@ -48,6 +59,5 @@ export declare class BaseService<T> {
     /**
      * Binding Model
      */
-    getModel(): BaseModel<T>;
-    setAuthorization(value: string): void;
+    model(): BaseModel<T>;
 }

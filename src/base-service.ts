@@ -4,127 +4,205 @@ import { BaseCollection } from './base-collection';
 import { BaseConfig } from './base-config';
 import { BaseOption } from './base-option';
 import { BaseEvent } from './base-event';
+import { BaseAuth } from './base-auth';
+import { HttpUnauthorized } from './base-error';
 import { HttpClient, HttpParams, HttpHeaders } from "@angular/common/http";
 
-export class BaseService<T>
-{
-    protected primaryKey: string = "id";
-    protected url: string = "";
-    protected perPage: number = 50;
-    protected page: number = 1;
+export class BaseService<T> implements BaseConfig {
+    public debug: boolean = false;          // Development
 
-    protected config: BaseConfig = {
-        baseUrl: "",
-        debug: true
-    }
+    public baseUrl: string;                         // Example: http://[baseUrl]
+    public url: string = "unkown";                  // Example: http://[baseUrl]/[url]
+    public primaryKey: string = "id";               // Example: http://[baseUrl]/[url]/[primaryKey] : For use PUT, DELETE http method
 
-    private _event: BaseEvent<BaseCollection<T>>;
-    private _option: BaseOption;
-    private _model: BaseModel<T> = new BaseModel();
-    private _http: HttpClient;
-    private _authorization: string = null;
+    public perPage: number = 50;                    // Example: http://[baseUrl]/[url]?perPage=[?]
+    public page: number = 1;                        // Example: http://[baseUrl]/[url]?perPage=[?]&page=[?]
 
-    constructor(http) {
+    public authorization: boolean = false;              // Authorization
+
+    private _auth: BaseAuth;                            // Base Auth
+    private _event: BaseEvent<BaseCollection<T>>;       // Base Event  :
+    private _option: BaseOption;                        // Base Option : HTTPClient GET Option
+    private _model: BaseModel<T> = new BaseModel();     // Base Model  : Model
+    private _http: HttpClient;                          // HTTPClient
+
+    constructor(http, config?: BaseConfig, auth?: BaseAuth) {
         /**
-         * Load HTTPClient from Angular Injection
+         * Load HTTPClient
          */
         this._http = http;
 
         /**
-         * Setup primary key to model object
+         * Load Config
          */
-        this._model.primaryKey = this.primaryKey;
+        this.setConfig(config);
 
         /**
-         * Setup dafault function for get RESTful
+         * Load BaseAuth
          */
-        this._event = {
-            /**
-             * Before Event
-             */
-            before: (params) => {
-                /** Check DEBUG is true */
-                if (this.config.debug == true) {
-                    console.log(this.url + " => Event Before: Params ", params);
-                }
-            },
-            success: (result) => {
-                /** Check DEBUG is true */
-                if (this.config.debug == true) {
-                    console.log(this.url + " => Event Success: Receive data", result);
-                }
-            },
-            error: (e) => {
-                /** Check DEBUG is true */
-                if (this.config.debug == true) {
-                    console.log(this.url + " => Event Error: Message ", e);
-                }
-            },
-            completed: () => {
-                /** Check DEBUG is true */
-                if (this.config.debug == true) {
-                    console.log(this.url + " => Completed.");
-                }
-            },
+        this.setAuthorization(auth);
+
+        /**
+         * Load HTTPClient Event
+         */
+        if(this.debug) {
+            this.setEvent({
+                before: (params) => {
+                    if (this.debug == true) {
+                        console.log(this.baseUrl + " => Event Before: Params ", params);
+                    }
+                },
+                success: (result) => {
+                    if (this.debug == true) {
+                        console.log(this.baseUrl + " => Event Success: Receive data", result);
+                    }
+                },
+                error: (e) => {
+                    if (this.debug == true) {
+                        console.log(this.baseUrl + " => Event Error: Message ", e);
+                    }
+                },
+                completed: () => {
+                    if (this.debug == true) {
+                        console.log(this.baseUrl + " => Completed.");
+                    }
+                },
+            });
+        }
+    }
+
+    public setAuthorization(auth: BaseAuth) {
+        this._auth = auth ? auth : null;
+        this.authorization = auth ? true : false;
+    }
+
+    public setConfig(config) {
+        this.debug = config.debug || this.debug;
+
+        this.baseUrl = config.baseUrl || this.baseUrl;
+        this.url = config.url || this.url;
+        this.primaryKey = config.primaryKey || this.primaryKey;
+        this._model.primaryKey = config.primaryKey || this.primaryKey;
+
+        this.perPage = config.perPage || this.perPage;
+        this.page = config.page || this.page;
+    }
+
+    public setEvent(event) {
+        this._event = event ? event : this._event;          // Load Default
+    }
+    public setOption(option) {
+        this._option = option ? option : this._option;      // Load Option :: ** TODO next time can get by last option
+    }
+
+    /**
+     * RaiseEvent
+     */
+    protected on(event, value?: any) {
+        switch (event) {
+            case "success":
+                if (this._event && this._event.success) this._event.success(value);
+                break;
+            case "before":
+                if (this._event && this._event.before) this._event.before(value);
+                break;
+            case "error":
+                if (this._event && this._event.error) this._event.error(value);
+                break;
+            case "completed":
+                if (this._event && this._event.completed) this._event.completed();
+                break;
         }
     }
 
     /**
-     * Get from server.
+     * HTTPClient: GET
      * 
-     * @param option Option for query on server.
-     * @param event Event for operation get.
+     * @param option Parameter get from RESTApi
+     * @param event Event HTTPClient
      */
     public get(option?: BaseOption, event?: BaseEvent<BaseCollection<T>>) {
-        this._option = option;
-
-        let url = this.config.baseUrl + "/" + this.url;
+        /**
+         * Url Header
+         */
+        let url = this.baseUrl + "/" + this.url;
         let header = new HttpHeaders();
-        if (this._authorization) header = header.set("Authorization", this._authorization);
+        let params = new HttpParams();
 
-        // Raise event Before
-        if (event && event.before) event.before(this._option);
-        var http = this._http.get<BaseCollection<T>>(url, {
-            headers: header,
-            params: <{}>this._option
-        }).subscribe(
-            (res: BaseCollection<T>) => {
-                // Fill Data from server to model
-                var data = res;
+        /**
+         * Load Option|Event
+         */
+        this.setOption(option);
+        this.setEvent(event);
 
-                this._model.items.current_page = data["current_page"];
-                this._model.items.data = data["data"];
-                this._model.items.first_page_url = data["first_page_url"];
-                this._model.items.from = data["from"];
-                this._model.items.last_page = data["last_page"];
-                this._model.items.last_page_url = data["last_page_url"];
-                this._model.items.next_page_url = data["next_page_url"];
-                this._model.items.path = data["path"];
-                this._model.items.per_page = data["per_page"];
-                this._model.items.prev_page_url = data["prev_page_url"];
-                this._model.items.to = data["to"];
-                this._model.items.total = data["total"];
+        /** 
+         * Load Params
+         */
+        if (this._option) {
+            if (this._option.search) params = params.append("search", this._option.search.toString());
+            if (this._option.perPage) params = params.append("perPage", this._option.perPage.toString());
+            if (this._option.page) params = params.append("page", this._option.page.toString());
+            if (this._option.include) params = params.append("include", this._option.include.toString());
 
-                data["data"].forEach((value: T) => {
-                    this._model.items.push(value);
+            if (this._option.values) {
+                this._option.values.forEach(value => {
+                    params = params.append(value.key, value.value.toString());
                 });
-
-                // Select First
-                if (this._model.count() > 0) this._model.selectedIndex = 0;
-
-                // Raise event Success
-                if (event && event.success) event.success(this._model.items);
-            },
-            e => {
-                // Raise event Error
-                if (event && event.error) event.error(e);
-            },
-            () => {
-                // Raise event Completed
-                if (event && event.completed) event.completed();
-                http.unsubscribe();
             }
-            );
+        }
+
+        /** 
+         * Authorization == true    => auth = logged()
+         * Authorization == false   => auth = true
+         * Authorization
+         */
+        let auth = this.authorization ? this._auth.logged() : true;
+        if (this.authorization) {
+            header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+        }
+
+        if (auth) {
+            this.on("before");
+
+            var http = this._http.get<BaseCollection<T>>(url, {
+                headers: header,
+                params: params
+            }).subscribe(
+                (res: BaseCollection<T>) => {
+                    // Fill Data from server to model
+                    var data = res;
+
+                    this._model.items.current_page = data["current_page"];
+                    this._model.items.data = data["data"];
+                    this._model.items.first_page_url = data["first_page_url"];
+                    this._model.items.from = data["from"];
+                    this._model.items.last_page = data["last_page"];
+                    this._model.items.last_page_url = data["last_page_url"];
+                    this._model.items.next_page_url = data["next_page_url"];
+                    this._model.items.path = data["path"];
+                    this._model.items.per_page = data["per_page"];
+                    this._model.items.prev_page_url = data["prev_page_url"];
+                    this._model.items.to = data["to"];
+                    this._model.items.total = data["total"];
+
+                    data["data"].forEach((value: T) => {
+                        this._model.items.push(value);
+                    });
+                    this._model.selectedIndex = 0;
+
+                    this.on("success", this._model.items);
+                },
+                e => {
+                    this.on("error", e);
+                },
+                () => {
+                    this.on("completed");
+                    http.unsubscribe();
+                }
+                );
+        } else {
+            this.on("error", new HttpUnauthorized());
+        }
     }
 
     /**
@@ -152,20 +230,120 @@ export class BaseService<T>
      * @param event Event for operation save.
      */
     public save(event?: BaseEvent<BaseCollection<T>>): void {
-        // Get record
+        // Item
         let value = this._model.selectedItem;
+
+        /**
+         * Url Header
+         */
+        let url = this.baseUrl + "/" + this.url;
         let header = new HttpHeaders();
-        if (this._authorization) header = header.set("Authorization", this._authorization);
 
-        // Check save NewRecord or Update
-        if (!value[this._model.primaryKey]) {
-            // New record. Bacause record not have primary key.
-            var url = this.config.baseUrl + "/" + this.url;
+        /**
+         * Load Option|Event
+         */
+        this.setEvent(event);
 
-            var http = this._http.post(url, value, { headers: header }).subscribe(
+        /** 
+         * Authorization == true    => auth = logged()
+         * Authorization == false   => auth = true
+         * Authorization
+         */
+        let auth = this.authorization ? this._auth.logged() : true;
+        if (this.authorization) {
+            header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+        }
+
+        if (auth) {
+            // Check save NewRecord or Update
+            if (!value[this._model.primaryKey]) {
+                var http = this._http.post(url, value, { headers: header }).subscribe(
+                    res => {
+                        // Push new record to array
+                        this._model.items.push(<T>res);
+
+                        // Refrsh data
+                        this._model.items = [...this._model.items];
+
+                        // Raise Event Success.
+                        if (event && event.success) event.success(<T>res);
+                    },
+                    e => {
+                        // Raise Event Error.
+                        if (event && event.error) event.error(e);
+                    },
+                    () => {
+                        // Raise Event Completed
+                        this.on("completed");
+                        http.unsubscribe();
+                    }
+                );
+            } else {
+                url = url + "/" + value[this._model.primaryKey];
+
+                var http = this._http.put(url, value, { headers: header }).subscribe(
+                    (res: T) => {
+                        // Update Record from server.
+                        this._model.items[this._model.selectedIndex] = <T>res;
+
+                        // Refrsh data
+                        this._model.items = [...this._model.items];
+
+                        // Raise Event Success.
+                        this.on("success", <T>res);
+                    },
+                    e => {
+                        // Raise Event Error.
+                        this.on("error", e);
+                    },
+                    () => {
+                        // Raise Event Completed
+                        this.on("completed");
+                        http.unsubscribe();
+                    }
+                );
+            }
+        } else {
+            this.on("error", new HttpUnauthorized());
+        }
+    }
+
+
+    /**
+     * Delete record on server.
+     * 
+     * @param event Event for operation delete.
+     */
+    public delete(event?: BaseEvent<BaseCollection<T>>): void {
+        // Item
+        let value = this._model.selectedItem;
+
+        /**
+         * Url Header
+         */
+        let url = this.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
+        let header = new HttpHeaders();
+
+        /**
+         * Load Option|Event
+         */
+        this.setEvent(event);
+
+        /** 
+         * Authorization == true    => auth = logged()
+         * Authorization == false   => auth = true
+         * Authorization
+         */
+        let auth = this.authorization ? this._auth.logged() : true;
+        if (this.authorization) {
+            header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+        }
+
+        if (auth) {
+            var http = this._http.delete(url, { headers: header }).subscribe(
                 res => {
-                    // Push new record to array
-                    this._model.items.push(<T>res);
+                    // Delete Record from server.
+                    this._model.items.splice(this._model.selectedIndex, 1);
 
                     // Refrsh data
                     this._model.items = [...this._model.items];
@@ -184,76 +362,14 @@ export class BaseService<T>
                 }
             );
         } else {
-            var url = this.config.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
-
-            var http = this._http.put(url, value, { headers: header }).subscribe(
-                res => {
-                    // Update Record from server.
-                    this._model.items[this._model.selectedIndex] = <T>res;
-
-                    // Refrsh data
-                    this._model.items = [...this._model.items];
-
-                    // Raise Event Success.
-                    if (event && event.success) event.success(<T>res);
-                },
-                e => {
-                    // Raise Event Error.
-                    if (event && event.error) event.error(e);
-                },
-                () => {
-                    // Raise Event Completed
-                    if (event && event.completed) event.completed();
-                    http.unsubscribe();
-                }
-            );
+            this.on("error", new HttpUnauthorized());
         }
-    }
-
-
-    /**
-     * Delete record on server.
-     * 
-     * @param event Event for operation delete.
-     */
-    public delete(event?: BaseEvent<BaseCollection<T>>): void {
-        let value = this._model.selectedItem;
-        let header = new HttpHeaders();
-        if (this._authorization) header = header.set("Authorization", this._authorization);
-
-        var url = this.config.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
-        var http = this._http.delete(url, { headers: header }).subscribe(
-            res => {
-                // Delete Record from server.
-                this._model.items.splice(this._model.selectedIndex, 1);
-
-                // Refrsh data
-                this._model.items = [...this._model.items];
-
-                // Raise Event Success.
-                if (event && event.success) event.success(<T>res);
-            },
-            e => {
-                // Raise Event Error.
-                if (event && event.error) event.error(e);
-            },
-            () => {
-                // Raise Event Completed
-                if (event && event.completed) event.completed();
-                http.unsubscribe();
-            }
-        );
     }
 
     /**
      * Binding Model
      */
-    public getModel(): BaseModel<T> {
+    public model(): BaseModel<T> {
         return this._model;
-    }
-
-
-    public setAuthorization(value: string) {
-        this._authorization = value;
     }
 }

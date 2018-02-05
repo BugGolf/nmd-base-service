@@ -1,7 +1,6 @@
 export interface BaseEvent<T> {
     /**
      * Before Event
-     * 
      */
     before?(params: any): void;
 
