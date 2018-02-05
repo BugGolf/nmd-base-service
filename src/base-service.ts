@@ -1,4 +1,4 @@
-
+import { Injectable } from '@angular/core';
 import { BaseModel } from './base-model';
 import { BaseCollection } from './base-collection';
 import { BaseConfig } from './base-config';
@@ -7,6 +7,7 @@ import { BaseEvent } from './base-event';
 import { BaseAuth } from './base-auth';
 import { HttpClient, HttpParams, HttpHeaders } from "@angular/common/http";
 
+@Injectable()
 export class BaseService<T> implements BaseConfig {
     public debug: boolean = false;          // Development
 
@@ -100,16 +101,16 @@ export class BaseService<T> implements BaseConfig {
     protected on(event, value?: any) {
         switch (event) {
             case "success":
-                if (this._event && this._event.success) this._event.success(value);
+                if (this._event && typeof(this._event.success) == 'function') this._event.success(value);
                 break;
             case "before":
-                if (this._event && this._event.before) this._event.before(value);
+                if (this._event && typeof(this._event.before) == 'function') this._event.before(value);
                 break;
             case "error":
-                if (this._event && this._event.error) this._event.error(value);
+                if (this._event && typeof(this._event.error) == 'function') this._event.error(value);
                 break;
             case "completed":
-                if (this._event && this._event.completed) this._event.completed();
+                if (this._event && typeof(this._event.completed) == 'function') this._event.completed();
                 break;
         }
     }
@@ -124,7 +125,6 @@ export class BaseService<T> implements BaseConfig {
         /**
          * Url Header
          */
-        let http;
         let url = this.baseUrl + "/" + this.url;
         let header = new HttpHeaders();
         let params = [];
@@ -156,25 +156,21 @@ export class BaseService<T> implements BaseConfig {
          * Authorization == false   => auth = true
          * Authorization
          */
-
+        
         let auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
-            header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
-
-            http = this._http.get<BaseCollection<T>>(url, {
-                headers: header,
-                params: JSON.parse(JSON.stringify(params))
-            });
+            header = header.set("Authorization", "Bearer " + this._auth.token()) // Get Access Token
         } else {
-            http = this._http.get<BaseCollection<T>>(url, {
-                params: JSON.parse(JSON.stringify(params))
-            });
+            header = header.set("Authorization", "None")
         }
-        
+
+
         if (auth) {
             this.on("before");
 
-            http = http.subscribe(
+            let http = this._http.get<BaseCollection<T>>(url, {
+                headers: header
+            }).subscribe(
                 (res: BaseCollection<T>) => {
                     // Fill Data from server to model
                     var data = res;
@@ -200,7 +196,6 @@ export class BaseService<T> implements BaseConfig {
                     this.on("success", this._model.items);
                 },
                 e => {
-                    console.log("Error");
                     this.on("error", e);
                 },
                 () => {
@@ -259,15 +254,17 @@ export class BaseService<T> implements BaseConfig {
          */
         let auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
-            header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+            header = header.set("Authorization", "Bearer " + this._auth.token()) // Get Access Token
         } else {
-            header = header.set("Authorization", "None");
+            header = header.set("Authorization", "None")
         }
 
         if (auth) {
             // Check save NewRecord or Update
             if (!value[this._model.primaryKey]) {
-                var http = this._http.post(url, value, { headers: header }).subscribe(
+                var http = this._http.post(url, value, { 
+                    headers: header
+                }).subscribe(
                     res => {
                         // Push new record to array
                         this._model.items.push(<T>res);
@@ -291,7 +288,9 @@ export class BaseService<T> implements BaseConfig {
             } else {
                 url = url + "/" + value[this._model.primaryKey];
 
-                var http = this._http.put(url, value, { headers: header }).subscribe(
+                var http = this._http.put(url, value, { 
+                    headers: header
+                }).subscribe(
                     (res: T) => {
                         // Update Record from server.
                         this._model.items[this._model.selectedIndex] = <T>res;
@@ -346,13 +345,15 @@ export class BaseService<T> implements BaseConfig {
          */
         let auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
-            header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
+            header = header.set("Authorization", "Bearer " + this._auth.token()) // Get Access Token
         } else {
-            header = header.set("Authorization", "None");
+            header = header.set("Authorization", "None")
         }
 
         if (auth) {
-            var http = this._http.delete(url, { headers: header }).subscribe(
+            var http = this._http.delete(url, { 
+                headers: header
+            }).subscribe(
                 res => {
                     // Delete Record from server.
                     this._model.items.splice(this._model.selectedIndex, 1);

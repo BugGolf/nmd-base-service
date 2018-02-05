@@ -16,7 +16,8 @@ export class BaseAuth {
     private REFRESH_TOKEN: string;
     private ACCESS_TOKEN: string;
 
-    constructor(private http:HttpClient) {
+    constructor(private http) {
+
         this.REFRESH_TOKEN = localStorage.getItem(this.X_REFRESH_TOKEN);
         this.ACCESS_TOKEN = localStorage.getItem(this.X_ACCESS_TOKEN);
     }
@@ -40,8 +41,6 @@ export class BaseAuth {
     }
 
     private getToken() {
-        let refreshToken = this.X_REFRESH_TOKEN;
-        
         this.http.get(this.authorization_url + this.authorization_url_token, {
             headers: new HttpHeaders().set(this.X_REFRESH_TOKEN, this.token()),
             responseType: 'json'
@@ -65,11 +64,17 @@ export class BaseAuth {
             return new Promise<boolean>((resolve) => {
                 // Basic Authorization
                 let authen = 'Basic ' + btoa(userId + ":" + passId);
+                let params = [];
 
-                console.log(this.http);
+                if(values) {
+                    values.forEach(value => {
+                        params[value.key]   = value.value;
+                    });
+                }
+
                 this.http.get(this.authorization_url + this.authorization_url_login, {
-                    headers: {"Authorization": authen},
-                    //params: JSON.parse(JSON.stringify(params)),
+                    headers: new HttpHeaders().set('Authorization', authen),
+                    params: JSON.parse(JSON.stringify(params)),
                     responseType: "json"
                 }).subscribe(
                     (res) => {

@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { HttpHeaders } from "@angular/common/http";
 import { Injectable } from '@angular/core';
 var BaseAuth = /** @class */ (function () {
     function BaseAuth(http) {
@@ -37,7 +37,6 @@ var BaseAuth = /** @class */ (function () {
     };
     BaseAuth.prototype.getToken = function () {
         var _this = this;
-        var refreshToken = this.X_REFRESH_TOKEN;
         this.http.get(this.authorization_url + this.authorization_url_token, {
             headers: new HttpHeaders().set(this.X_REFRESH_TOKEN, this.token()),
             responseType: 'json'
@@ -63,10 +62,15 @@ var BaseAuth = /** @class */ (function () {
             return new Promise(function (resolve) {
                 // Basic Authorization
                 var authen = 'Basic ' + btoa(userId + ":" + passId);
-                console.log(_this.http);
+                var params = [];
+                if (values) {
+                    values.forEach(function (value) {
+                        params[value.key] = value.value;
+                    });
+                }
                 _this.http.get(_this.authorization_url + _this.authorization_url_login, {
-                    headers: { "Authorization": authen },
-                    //params: JSON.parse(JSON.stringify(params)),
+                    headers: new HttpHeaders().set('Authorization', authen),
+                    params: JSON.parse(JSON.stringify(params)),
                     responseType: "json"
                 }).subscribe(function (res) {
                     if (res["accessToken"] && res["refreshToken"]) {
@@ -128,7 +132,7 @@ var BaseAuth = /** @class */ (function () {
     };
     BaseAuth = __decorate([
         Injectable(),
-        __metadata("design:paramtypes", [HttpClient])
+        __metadata("design:paramtypes", [Object])
     ], BaseAuth);
     return BaseAuth;
 }());

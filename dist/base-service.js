@@ -1,4 +1,15 @@
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+import { Injectable } from '@angular/core';
 import { BaseModel } from './base-model';
+import { BaseAuth } from './base-auth';
 import { HttpHeaders } from "@angular/common/http";
 var BaseService = /** @class */ (function () {
     function BaseService(http, config, auth) {
@@ -75,19 +86,19 @@ var BaseService = /** @class */ (function () {
     BaseService.prototype.on = function (event, value) {
         switch (event) {
             case "success":
-                if (this._event && this._event.success)
+                if (this._event && typeof (this._event.success) == 'function')
                     this._event.success(value);
                 break;
             case "before":
-                if (this._event && this._event.before)
+                if (this._event && typeof (this._event.before) == 'function')
                     this._event.before(value);
                 break;
             case "error":
-                if (this._event && this._event.error)
+                if (this._event && typeof (this._event.error) == 'function')
                     this._event.error(value);
                 break;
             case "completed":
-                if (this._event && this._event.completed)
+                if (this._event && typeof (this._event.completed) == 'function')
                     this._event.completed();
                 break;
         }
@@ -103,7 +114,6 @@ var BaseService = /** @class */ (function () {
         /**
          * Url Header
          */
-        var http;
         var url = this.baseUrl + "/" + this.url;
         var header = new HttpHeaders();
         var params = [];
@@ -138,19 +148,15 @@ var BaseService = /** @class */ (function () {
         var auth = this.authorization ? this._auth.logged() : true;
         if (this.authorization) {
             header = header.set("Authorization", "Bearer " + this._auth.token()); // Get Access Token
-            http = this._http.get(url, {
-                headers: header,
-                params: JSON.parse(JSON.stringify(params))
-            });
         }
         else {
-            http = this._http.get(url, {
-                params: JSON.parse(JSON.stringify(params))
-            });
+            header = header.set("Authorization", "None");
         }
         if (auth) {
             this.on("before");
-            http = http.subscribe(function (res) {
+            var http_1 = this._http.get(url, {
+                headers: header
+            }).subscribe(function (res) {
                 // Fill Data from server to model
                 var data = res;
                 _this._model.items.current_page = data["current_page"];
@@ -171,11 +177,10 @@ var BaseService = /** @class */ (function () {
                 _this._model.selectedIndex = 0;
                 _this.on("success", _this._model.items);
             }, function (e) {
-                console.log("Error");
                 _this.on("error", e);
             }, function () {
                 _this.on("completed");
-                http.unsubscribe();
+                http_1.unsubscribe();
             });
         }
         else {
@@ -232,7 +237,9 @@ var BaseService = /** @class */ (function () {
         if (auth) {
             // Check save NewRecord or Update
             if (!value[this._model.primaryKey]) {
-                var http = this._http.post(url, value, { headers: header }).subscribe(function (res) {
+                var http = this._http.post(url, value, {
+                    headers: header
+                }).subscribe(function (res) {
                     // Push new record to array
                     _this._model.items.push(res);
                     // Refrsh data
@@ -252,7 +259,9 @@ var BaseService = /** @class */ (function () {
             }
             else {
                 url = url + "/" + value[this._model.primaryKey];
-                var http = this._http.put(url, value, { headers: header }).subscribe(function (res) {
+                var http = this._http.put(url, value, {
+                    headers: header
+                }).subscribe(function (res) {
                     // Update Record from server.
                     _this._model.items[_this._model.selectedIndex] = res;
                     // Refrsh data
@@ -304,7 +313,9 @@ var BaseService = /** @class */ (function () {
             header = header.set("Authorization", "None");
         }
         if (auth) {
-            var http = this._http.delete(url, { headers: header }).subscribe(function (res) {
+            var http = this._http.delete(url, {
+                headers: header
+            }).subscribe(function (res) {
                 // Delete Record from server.
                 _this._model.items.splice(_this._model.selectedIndex, 1);
                 // Refrsh data
@@ -333,6 +344,10 @@ var BaseService = /** @class */ (function () {
     BaseService.prototype.model = function () {
         return this._model;
     };
+    BaseService = __decorate([
+        Injectable(),
+        __metadata("design:paramtypes", [Object, Object, BaseAuth])
+    ], BaseService);
     return BaseService;
 }());
 export { BaseService };
