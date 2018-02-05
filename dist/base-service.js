@@ -154,7 +154,8 @@ var BaseService = /** @class */ (function () {
         if (auth) {
             this.on("before");
             var http_1 = this._http.get(url, {
-                headers: header
+                headers: header,
+                params: params
             }).subscribe(function (res) {
                 // Fill Data from server to model
                 var data = res;
