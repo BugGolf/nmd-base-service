@@ -21,7 +21,6 @@ export class BaseService<T> implements BaseConfig {
     public authorization: boolean = false;              // Authorization
 
     private _auth: BaseAuth;                            // Base Auth
-    private _event: BaseEvent<BaseCollection<T>>;       // Base Event  :
     private _option: BaseOption;                        // Base Option : HTTPClient GET Option
     private _model: BaseModel<T> = new BaseModel();     // Base Model  : Model
     private _http: HttpClient;                          // HTTPClient
@@ -41,34 +40,6 @@ export class BaseService<T> implements BaseConfig {
          * Load BaseAuth
          */
         this.setAuthorization(auth);
-
-        /**
-         * Load HTTPClient Event
-         */
-        if(this.debug) {
-            this.setEvent({
-                before: (params) => {
-                    if (this.debug == true) {
-                        console.log(this.baseUrl + " => Event Before: Params ", params);
-                    }
-                },
-                success: (result) => {
-                    if (this.debug == true) {
-                        console.log(this.baseUrl + " => Event Success: Receive data", result);
-                    }
-                },
-                error: (e) => {
-                    if (this.debug == true) {
-                        console.log(this.baseUrl + " => Event Error: Message ", e);
-                    }
-                },
-                completed: () => {
-                    if (this.debug == true) {
-                        console.log(this.baseUrl + " => Completed.");
-                    }
-                },
-            });
-        }
     }
 
     public setAuthorization(auth: BaseAuth) {
@@ -88,31 +59,8 @@ export class BaseService<T> implements BaseConfig {
         this.page = config.page || this.page;
     }
 
-    public setEvent(event) {
-        this._event = event ? event : this._event;          // Load Default
-    }
     public setOption(option) {
         this._option = option ? option : this._option;      // Load Option :: ** TODO next time can get by last option
-    }
-
-    /**
-     * RaiseEvent
-     */
-    protected on(event, value?: any) {
-        switch (event) {
-            case "success":
-                if (this._event && typeof(this._event.success) == 'function') this._event.success(value);
-                break;
-            case "before":
-                if (this._event && typeof(this._event.before) == 'function') this._event.before(value);
-                break;
-            case "error":
-                if (this._event && typeof(this._event.error) == 'function') this._event.error(value);
-                break;
-            case "completed":
-                if (this._event && typeof(this._event.completed) == 'function') this._event.completed();
-                break;
-        }
     }
 
     /**
@@ -133,7 +81,7 @@ export class BaseService<T> implements BaseConfig {
          * Load Option|Event
          */
         this.setOption(option);
-        this.setEvent(event);
+        //this.setEvent(event);
 
         /** 
          * Load Params
@@ -166,7 +114,7 @@ export class BaseService<T> implements BaseConfig {
 
 
         if (auth) {
-            this.on("before");
+            if (event && typeof(event.before) == 'function') event.before(params);
 
             let http = this._http.get<BaseCollection<T>>(url, {
                 headers: header,
@@ -194,18 +142,18 @@ export class BaseService<T> implements BaseConfig {
                     });
                     this._model.selectedIndex = 0;
 
-                    this.on("success", this._model.items);
+                    if (event && typeof(event.success) == 'function') event.success(this._model.items);
                 },
                 e => {
-                    this.on("error", e);
+                    if (event && typeof(event.error) == 'function') event.error(e);
                 },
                 () => {
-                    this.on("completed");
+                    if (event && typeof(event.completed) == 'function') event.completed();
                     http.unsubscribe();
                 }
             );
         } else {
-            this.on("error", "Access Denied");
+            if (event && typeof(event.error) == 'function') event.error("Access Denied");
         }
     }
 
@@ -243,11 +191,7 @@ export class BaseService<T> implements BaseConfig {
         let url = this.baseUrl + "/" + this.url;
         let header = {};
 
-        /**
-         * Load Option|Event
-         */
-        this.setEvent(event);
-
+       
         /** 
          * Authorization == true    => auth = logged()
          * Authorization == false   => auth = true
@@ -266,7 +210,7 @@ export class BaseService<T> implements BaseConfig {
                 var http = this._http.post(url, value, { 
                     headers: header
                 }).subscribe(
-                    res => {
+                    (res:T) => {
                         // Push new record to array
                         this._model.items.push(<T>res);
 
@@ -274,15 +218,15 @@ export class BaseService<T> implements BaseConfig {
                         this._model.items = [...this._model.items];
 
                         // Raise Event Success.
-                        if (event && event.success) event.success(<T>res);
+                        if (event && typeof(event.success) == 'function') event.success(res);
                     },
                     e => {
                         // Raise Event Error.
-                        if (event && event.error) event.error(e);
+                        if (event && typeof(event.error) == 'function') event.error(e);
                     },
                     () => {
                         // Raise Event Completed
-                        this.on("completed");
+                        if (event && typeof(event.completed) == 'function') event.completed();
                         http.unsubscribe();
                     }
                 );
@@ -300,21 +244,21 @@ export class BaseService<T> implements BaseConfig {
                         this._model.items = [...this._model.items];
 
                         // Raise Event Success.
-                        this.on("success", <T>res);
+                        if (event && typeof(event.success) == 'function') event.success(res);
                     },
                     e => {
                         // Raise Event Error.
-                        this.on("error", e);
+                        if (event && typeof(event.error) == 'function') event.error(e);
                     },
                     () => {
                         // Raise Event Completed
-                        this.on("completed");
+                        if (event && typeof(event.completed) == 'function') event.completed();
                         http.unsubscribe();
                     }
                 );
             }
         } else {
-            this.on("error", "Access Denied");
+            if (event && typeof(event.error) == 'function') event.error("Access Denied");
         }
     }
 
@@ -333,11 +277,6 @@ export class BaseService<T> implements BaseConfig {
          */
         let url = this.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
         let header = {};
-
-        /**
-         * Load Option|Event
-         */
-        this.setEvent(event);
 
         /** 
          * Authorization == true    => auth = logged()
@@ -363,20 +302,20 @@ export class BaseService<T> implements BaseConfig {
                     this._model.items = [...this._model.items];
 
                     // Raise Event Success.
-                    if (event && event.success) event.success(<T>res);
+                    if (event && typeof(event.success) == 'function') event.success(res);
                 },
                 e => {
                     // Raise Event Error.
-                    if (event && event.error) event.error(e);
+                    if (event && typeof(event.error) == 'function') event.error(e);
                 },
                 () => {
                     // Raise Event Completed
-                    if (event && event.completed) event.completed();
+                    if (event && typeof(event.completed) == 'function') event.completed();
                     http.unsubscribe();
                 }
             );
         } else {
-            this.on("error", "Access Denied");
+            if (event && typeof(event.error) == 'function') event.error("Access Denied");
         }
     }
 

@@ -13,19 +13,13 @@ export declare class BaseService<T> implements BaseConfig {
     page: number;
     authorization: boolean;
     private _auth;
-    private _event;
     private _option;
     private _model;
     private _http;
     constructor(http: any, config?: BaseConfig, auth?: BaseAuth);
     setAuthorization(auth: BaseAuth): void;
     setConfig(config: any): void;
-    setEvent(event: any): void;
     setOption(option: any): void;
-    /**
-     * RaiseEvent
-     */
-    protected on(event: any, value?: any): void;
     /**
      * HTTPClient: GET
      *

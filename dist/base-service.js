@@ -12,7 +12,6 @@ import { BaseModel } from './base-model';
 import { BaseAuth } from './base-auth';
 var BaseService = /** @class */ (function () {
     function BaseService(http, config, auth) {
-        var _this = this;
         this.debug = false; // Development
         this.url = "unkown"; // Example: http://[baseUrl]/[url]
         this.primaryKey = "id"; // Example: http://[baseUrl]/[url]/[primaryKey] : For use PUT, DELETE http method
@@ -32,33 +31,6 @@ var BaseService = /** @class */ (function () {
          * Load BaseAuth
          */
         this.setAuthorization(auth);
-        /**
-         * Load HTTPClient Event
-         */
-        if (this.debug) {
-            this.setEvent({
-                before: function (params) {
-                    if (_this.debug == true) {
-                        console.log(_this.baseUrl + " => Event Before: Params ", params);
-                    }
-                },
-                success: function (result) {
-                    if (_this.debug == true) {
-                        console.log(_this.baseUrl + " => Event Success: Receive data", result);
-                    }
-                },
-                error: function (e) {
-                    if (_this.debug == true) {
-                        console.log(_this.baseUrl + " => Event Error: Message ", e);
-                    }
-                },
-                completed: function () {
-                    if (_this.debug == true) {
-                        console.log(_this.baseUrl + " => Completed.");
-                    }
-                },
-            });
-        }
     }
     BaseService.prototype.setAuthorization = function (auth) {
         this._auth = auth ? auth : null;
@@ -73,34 +45,8 @@ var BaseService = /** @class */ (function () {
         this.perPage = config.perPage || this.perPage;
         this.page = config.page || this.page;
     };
-    BaseService.prototype.setEvent = function (event) {
-        this._event = event ? event : this._event; // Load Default
-    };
     BaseService.prototype.setOption = function (option) {
         this._option = option ? option : this._option; // Load Option :: ** TODO next time can get by last option
-    };
-    /**
-     * RaiseEvent
-     */
-    BaseService.prototype.on = function (event, value) {
-        switch (event) {
-            case "success":
-                if (this._event && typeof (this._event.success) == 'function')
-                    this._event.success(value);
-                break;
-            case "before":
-                if (this._event && typeof (this._event.before) == 'function')
-                    this._event.before(value);
-                break;
-            case "error":
-                if (this._event && typeof (this._event.error) == 'function')
-                    this._event.error(value);
-                break;
-            case "completed":
-                if (this._event && typeof (this._event.completed) == 'function')
-                    this._event.completed();
-                break;
-        }
     };
     /**
      * HTTPClient: GET
@@ -120,7 +66,7 @@ var BaseService = /** @class */ (function () {
          * Load Option|Event
          */
         this.setOption(option);
-        this.setEvent(event);
+        //this.setEvent(event);
         /**
          * Load Params
          */
@@ -152,7 +98,8 @@ var BaseService = /** @class */ (function () {
             header['Authorization'] = "None";
         }
         if (auth) {
-            this.on("before");
+            if (event && typeof (event.before) == 'function')
+                event.before(params);
             var http_1 = this._http.get(url, {
                 headers: header,
                 params: params
@@ -175,16 +122,20 @@ var BaseService = /** @class */ (function () {
                     _this._model.items.push(value);
                 });
                 _this._model.selectedIndex = 0;
-                _this.on("success", _this._model.items);
+                if (event && typeof (event.success) == 'function')
+                    event.success(_this._model.items);
             }, function (e) {
-                _this.on("error", e);
+                if (event && typeof (event.error) == 'function')
+                    event.error(e);
             }, function () {
-                _this.on("completed");
+                if (event && typeof (event.completed) == 'function')
+                    event.completed();
                 http_1.unsubscribe();
             });
         }
         else {
-            this.on("error", "Access Denied");
+            if (event && typeof (event.error) == 'function')
+                event.error("Access Denied");
         }
     };
     /**
@@ -219,10 +170,6 @@ var BaseService = /** @class */ (function () {
         var url = this.baseUrl + "/" + this.url;
         var header = {};
         /**
-         * Load Option|Event
-         */
-        this.setEvent(event);
-        /**
          * Authorization == true    => auth = logged()
          * Authorization == false   => auth = true
          * Authorization
@@ -245,15 +192,16 @@ var BaseService = /** @class */ (function () {
                     // Refrsh data
                     _this._model.items = _this._model.items.slice();
                     // Raise Event Success.
-                    if (event && event.success)
+                    if (event && typeof (event.success) == 'function')
                         event.success(res);
                 }, function (e) {
                     // Raise Event Error.
-                    if (event && event.error)
+                    if (event && typeof (event.error) == 'function')
                         event.error(e);
                 }, function () {
                     // Raise Event Completed
-                    _this.on("completed");
+                    if (event && typeof (event.completed) == 'function')
+                        event.completed();
                     http.unsubscribe();
                 });
             }
@@ -267,19 +215,23 @@ var BaseService = /** @class */ (function () {
                     // Refrsh data
                     _this._model.items = _this._model.items.slice();
                     // Raise Event Success.
-                    _this.on("success", res);
+                    if (event && typeof (event.success) == 'function')
+                        event.success(res);
                 }, function (e) {
                     // Raise Event Error.
-                    _this.on("error", e);
+                    if (event && typeof (event.error) == 'function')
+                        event.error(e);
                 }, function () {
                     // Raise Event Completed
-                    _this.on("completed");
+                    if (event && typeof (event.completed) == 'function')
+                        event.completed();
                     http.unsubscribe();
                 });
             }
         }
         else {
-            this.on("error", "Access Denied");
+            if (event && typeof (event.error) == 'function')
+                event.error("Access Denied");
         }
     };
     /**
@@ -296,10 +248,6 @@ var BaseService = /** @class */ (function () {
          */
         var url = this.baseUrl + "/" + this.url + "/" + value[this._model.primaryKey];
         var header = {};
-        /**
-         * Load Option|Event
-         */
-        this.setEvent(event);
         /**
          * Authorization == true    => auth = logged()
          * Authorization == false   => auth = true
@@ -321,21 +269,22 @@ var BaseService = /** @class */ (function () {
                 // Refrsh data
                 _this._model.items = _this._model.items.slice();
                 // Raise Event Success.
-                if (event && event.success)
+                if (event && typeof (event.success) == 'function')
                     event.success(res);
             }, function (e) {
                 // Raise Event Error.
-                if (event && event.error)
+                if (event && typeof (event.error) == 'function')
                     event.error(e);
             }, function () {
                 // Raise Event Completed
-                if (event && event.completed)
+                if (event && typeof (event.completed) == 'function')
                     event.completed();
                 http.unsubscribe();
             });
         }
         else {
-            this.on("error", "Access Denied");
+            if (event && typeof (event.error) == 'function')
+                event.error("Access Denied");
         }
     };
     /**
