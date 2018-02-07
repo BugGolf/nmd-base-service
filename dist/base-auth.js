@@ -36,21 +36,25 @@ var BaseAuth = /** @class */ (function () {
     };
     BaseAuth.prototype.getToken = function () {
         var _this = this;
-        var header = {};
-        header[this.X_REFRESH_TOKEN] = this.token();
-        this.http.get(this.authorization_url + this.authorization_url_token, {
-            headers: header,
-            responseType: 'json'
-        }).subscribe(function (res) {
-            if (res["accessToken"]) {
-                var accessToken = res["accessToken"];
-                localStorage.setItem(_this.X_ACCESS_TOKEN, accessToken);
-            }
-            else {
+        return new Promise(function (resolve) {
+            var header = {};
+            header[_this.X_REFRESH_TOKEN] = _this.token();
+            _this.http.get(_this.authorization_url + _this.authorization_url_token, {
+                headers: header,
+                responseType: 'json'
+            }).subscribe(function (res) {
+                if (res["accessToken"]) {
+                    var accessToken = res["accessToken"];
+                    localStorage.setItem(_this.X_ACCESS_TOKEN, accessToken);
+                }
+                else {
+                    _this.clearToken();
+                }
+                resolve(true);
+            }, function (e) {
                 _this.clearToken();
-            }
-        }, function (e) {
-            _this.clearToken();
+                resolve(false);
+            });
         });
     };
     BaseAuth.prototype.login = function (userId, passId) {
@@ -112,21 +116,22 @@ var BaseAuth = /** @class */ (function () {
         });
     };
     BaseAuth.prototype.logged = function () {
-        // ตรวจสอบ Access Token จาก localStorage
-        var token = localStorage.getItem(this.X_ACCESS_TOKEN) || null;
-        if (token) {
-            // ถ้าพบ Access Token นั้นหมายความว่าเข้าใช้งานระบบแล้ว
-            var validToken = this.validJwt(token);
-            // ตรวจสอบ Access Token ว่าหมดอายุหรือยัง?
-            if (!validToken) {
-                // หากหมดอายุแล้วจะต้องขอใหม่
-                this.getToken();
+        var _this = this;
+        return new Promise(function (resolve) {
+            var token = localStorage.getItem(_this.X_ACCESS_TOKEN) || null;
+            if (token) {
+                var validToken = _this.validJwt(token);
+                if (!validToken) {
+                    resolve(_this.getToken());
+                }
+                else {
+                    resolve(true);
+                }
             }
-            return true;
-        }
-        else {
-            return false;
-        }
+            else {
+                resolve(false);
+            }
+        });
     };
     BaseAuth.prototype.payloads = function () {
         var token = localStorage.getItem(this.X_ACCESS_TOKEN) || null;

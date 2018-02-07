@@ -121,6 +121,7 @@ export class BaseService<T> implements BaseConfig {
                 params: params
             }).subscribe(
                 (res: BaseCollection<T>) => {
+                    this._model.items = [];
                     // Fill Data from server to model
                     var data = res;
 

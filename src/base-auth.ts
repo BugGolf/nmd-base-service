@@ -5,13 +5,13 @@ import { Injectable } from '@angular/core';
 
 @Injectable()
 export class BaseAuth {
-    public authorization_url: string          = '';                 // Authorization : Example http://[authorization_url]
-    public authorization_url_login: string    = '/login';           // Authorization : Example http://[authorization_url]/[login]   Get Refresh Token
-    public authorization_url_logout: string   = '/logout';          // Authorization : Example http://[authorization_url]/[logout]  Clear Token
-    public authorization_url_token: string    = '/accessToken';     // Authorization : Example http://[authorization_url]/[token]   Get Access Token
+    public authorization_url: string = '';                 // Authorization : Example http://[authorization_url]
+    public authorization_url_login: string = '/login';           // Authorization : Example http://[authorization_url]/[login]   Get Refresh Token
+    public authorization_url_logout: string = '/logout';          // Authorization : Example http://[authorization_url]/[logout]  Clear Token
+    public authorization_url_token: string = '/accessToken';     // Authorization : Example http://[authorization_url]/[token]   Get Access Token
 
-    private X_REFRESH_TOKEN:string = 'X-REFRESH-TOKEN';
-    private X_ACCESS_TOKEN:string = 'X-ACCESS-TOKEN';
+    private X_REFRESH_TOKEN: string = 'X-REFRESH-TOKEN';
+    private X_ACCESS_TOKEN: string = 'X-ACCESS-TOKEN';
 
     private REFRESH_TOKEN: string;
     private ACCESS_TOKEN: string;
@@ -40,29 +40,33 @@ export class BaseAuth {
         localStorage.removeItem(this.X_REFRESH_TOKEN);
     }
 
-    private getToken() {
-        let header = {};
-        header[this.X_REFRESH_TOKEN] = this.token();
+    private getToken(): Promise<boolean> {
+        return new Promise<boolean>(resolve => {
+            let header = {};
+            header[this.X_REFRESH_TOKEN] = this.token();
 
-        this.http.get(this.authorization_url + this.authorization_url_token, {
-            headers: header,
-            responseType: 'json'
-        }).subscribe(
-            (res) => {
-                if (res["accessToken"]) {
-                    let accessToken = res["accessToken"];
-                    localStorage.setItem(this.X_ACCESS_TOKEN, accessToken);
-                } else {
+            this.http.get(this.authorization_url + this.authorization_url_token, {
+                headers: header,
+                responseType: 'json'
+            }).subscribe(
+                (res) => {
+                    if (res["accessToken"]) {
+                        let accessToken = res["accessToken"];
+                        localStorage.setItem(this.X_ACCESS_TOKEN, accessToken);
+                    } else {
+                        this.clearToken();
+                    }
+                    resolve(true);
+                },
+                (e) => {
                     this.clearToken();
+                    resolve(false);
                 }
-            },
-            (e) => {
-                this.clearToken();
-            }
-        );
+            );
+        });
     }
 
-    public login(userId: string, passId: string, ...values:{key:string, value:string}[]): Promise<boolean> {
+    public login(userId: string, passId: string, ...values: { key: string, value: string }[]): Promise<boolean> {
         if (userId && passId) {
             return new Promise<boolean>((resolve) => {
                 // Basic Authorization
@@ -72,9 +76,9 @@ export class BaseAuth {
                 let authen = 'Basic ' + btoa(userId + ":" + passId);
                 header['Authorization'] = authen;
 
-                if(values) {
+                if (values) {
                     values.forEach(value => {
-                        if(value.value) params[value.key]   = value.value;
+                        if (value.value) params[value.key] = value.value;
                     });
                 }
 
@@ -104,7 +108,7 @@ export class BaseAuth {
         }
     }
 
-    public logout():Promise<boolean> {
+    public logout(): Promise<boolean> {
         return new Promise<boolean>((resolve) => {
             let header = {};
             header[this.X_REFRESH_TOKEN] = this.token();
@@ -113,36 +117,34 @@ export class BaseAuth {
                 headers: header,
                 responseType: 'text'
             }).subscribe(
-                res => { 
+                res => {
                     this.clearToken();
-                    resolve(true); 
+                    resolve(true);
                 },
                 e => {
                     console.log(e);
-                    resolve(false); 
+                    resolve(false);
                 }
-            );
+                );
         });
     }
 
-    public logged() {
-        // ตรวจสอบ Access Token จาก localStorage
-        let token = localStorage.getItem(this.X_ACCESS_TOKEN) || null;
+    public logged():Promise<boolean> {
+        return new Promise<boolean>(resolve=> {
+            let token = localStorage.getItem(this.X_ACCESS_TOKEN) || null;
 
-        if (token) {
-            // ถ้าพบ Access Token นั้นหมายความว่าเข้าใช้งานระบบแล้ว
-            let validToken = this.validJwt(token);
+            if (token) {
+                let validToken = this.validJwt(token);
 
-            // ตรวจสอบ Access Token ว่าหมดอายุหรือยัง?
-            if (!validToken) {
-                // หากหมดอายุแล้วจะต้องขอใหม่
-                this.getToken();
+                if (!validToken) {
+                    resolve(this.getToken());
+                } else {
+                    resolve(true);
+                }
+            } else {
+                resolve(false);
             }
-            return true;
-
-        } else {
-            return false;
-        }
+        });
     }
 
     public payloads() {
@@ -153,7 +155,7 @@ export class BaseAuth {
     }
 
     public token() {
-        return localStorage.getItem(this.X_ACCESS_TOKEN) || null; 
+        return localStorage.getItem(this.X_ACCESS_TOKEN) || null;
     }
 
 

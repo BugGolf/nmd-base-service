@@ -18,7 +18,7 @@ export declare class BaseAuth {
         value: string;
     }[]): Promise<boolean>;
     logout(): Promise<boolean>;
-    logged(): boolean;
+    logged(): Promise<boolean>;
     payloads(): any;
     token(): string;
 }
