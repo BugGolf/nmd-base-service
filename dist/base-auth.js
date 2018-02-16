@@ -38,7 +38,7 @@ var BaseAuth = /** @class */ (function () {
         var _this = this;
         return new Promise(function (resolve) {
             var header = {};
-            header[_this.X_REFRESH_TOKEN] = _this.token();
+            header[_this.X_REFRESH_TOKEN] = _this.REFRESH_TOKEN;
             _this.http.get(_this.authorization_url + _this.authorization_url_token, {
                 headers: header,
                 responseType: 'json'

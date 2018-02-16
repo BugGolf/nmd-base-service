@@ -43,7 +43,7 @@ export class BaseAuth {
     private getToken(): Promise<boolean> {
         return new Promise<boolean>(resolve => {
             let header = {};
-            header[this.X_REFRESH_TOKEN] = this.token();
+            header[this.X_REFRESH_TOKEN] = this.REFRESH_TOKEN;
 
             this.http.get(this.authorization_url + this.authorization_url_token, {
                 headers: header,
@@ -137,7 +137,7 @@ export class BaseAuth {
                 let validToken = this.validJwt(token);
 
                 if (!validToken) {
-                    resolve(this.getToken());
+                    this.getToken().then(res => resolve(res));
                 } else {
                     resolve(true);
                 }

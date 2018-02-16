@@ -104,6 +104,7 @@ var BaseService = /** @class */ (function () {
                 headers: header,
                 params: params
             }).subscribe(function (res) {
+                _this._model.items = [];
                 // Fill Data from server to model
                 var data = res;
                 _this._model.items.current_page = data["current_page"];
